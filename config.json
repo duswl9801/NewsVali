@@ -2,7 +2,8 @@
 	"general":{
 		"output_dir": "./outputs",
 		"data_dir": "./dataset",
-		"experiment_name": "basic_logistic_regression"
+		"history_name": "metrics",
+		"scoring": "f1"
 	},
 	"input":{
 		"type": "",

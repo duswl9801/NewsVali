@@ -1,10 +1,9 @@
 import os
 
-from configuration import Configuration
-from tracker import Tracker
+from old.utils import Configuration
+from old.utils import Tracker
 from models.MyLogisticRegression import MyLogisticRegression
-from metrics import *
-from utils import *
+from old.utils import *
 
 from sklearn.model_selection import train_test_split
 

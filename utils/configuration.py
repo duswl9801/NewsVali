@@ -133,4 +133,14 @@ class Configuration:
 
         return Configuration(config_data, strict_mode, warning_mode)
 
+    @staticmethod
+    def load_model_config(filename, model_name):
+        with open(filename, "r", encoding="utf-8") as f:
+            configs = json.load(f)
+
+        if model_name not in configs:
+            raise ValueError(f"No config found for model {model_name}")
+
+        return configs[model_name]
+
 
