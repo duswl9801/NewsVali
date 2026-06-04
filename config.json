@@ -3,7 +3,33 @@
 		"output_dir": "./outputs",
 		"data_dir": "./dataset",
 		"history_name": "metrics",
-		"scoring": "f1"
+		"ramdom_seed": 42,
+		"scoring": "f1",
+		"tracker": {
+			"columns": [
+				"model_name",
+      			"tuning_method",
+      			"hyperparams",
+
+      			"train_acc",
+      			"train_loss",
+      			"val_acc",
+      			"val_loss",
+
+      			"test_accuracy",
+      			"test_precision",
+				"test_recall",
+      			"test_f1",
+
+      			"test_tp",
+      			"test_fp",
+				"test_fn",
+      			"test_tn",
+
+      			"random_seed",
+      			"note"
+			]
+		}
 	},
 	"input":{
 		"type": "",

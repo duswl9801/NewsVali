@@ -19,10 +19,11 @@ Main features:
 - visualize metrics with seaborn
 """
 class Tracker:
-    def __init__(self, save_dir, experiment_name="temp_experiment", filename="temp_metrics.csv"):
+    def __init__(self, save_dir, experiment_name="temp_experiment", filename="temp_metrics.csv", columns=None):
         self.save_dir = save_dir
         self.experiment_name = experiment_name
         self.file_path = os.path.join(save_dir, filename)
+        self.columns = columns
 
         os.makedirs(save_dir, exist_ok=True)
 
@@ -112,7 +113,26 @@ class Tracker:
         base_row.update(row)
         self._append_csv(base_row)
 
+    def _format_row(self, row):
+        if self.columns is None:
+            return row
+
+        formatted = {}
+
+        # make columns in config first
+        for col in self.columns:
+            formatted[col] = row.get(col, "")
+
+        # keep extra columns if some future code adds them
+        for key, value in row.items():
+            if key not in formatted:
+                formatted[key] = value
+
+        return formatted
+
     def _append_csv(self, row):
+        row = self._format_row(row)
+
         file_exists = os.path.exists(self.file_path)
         file_empty = (not file_exists) or os.path.getsize(self.file_path) == 0
 

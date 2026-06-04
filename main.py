@@ -1,10 +1,10 @@
 import os
 
+from tuning.tuning_registry import get_tuner
 from utils.configuration import Configuration
 from utils.tracker import Tracker
-from models.MyLogisticRegression import MyLogisticRegression
-from utils.metrics_clf import *
 from utils.util import *
+from evaluation.evaluation import *
 
 """
 
@@ -23,7 +23,22 @@ def main():
     vectorizer, X_train_tfidf, X_test_tfidf, y_train, y_test = (
         load_data(vectorizer_path, x_train_path, x_test_path, y_train_path, y_test_path))
 
-    print("##### Start Environment Setting #####")
+    print("\n##### Start Environment Setting #####")
+    config = Configuration.from_file("config.json")
+
+    output_dir = config.get_str("general.output_dir", "./outputs")
+    os.makedirs(output_dir, exist_ok=True)
+
+    random_seed = config.get_int("general.random_seed", 42)
+
+    tracker_columns = config.get("general.tracker.columns", None)
+    tracker = Tracker(
+        save_dir=output_dir,
+        experiment_name="",
+        filename="metrics.csv",
+        columns=tracker_columns
+    )
+
     #############################################
     # Options:
     # "lr" - logistic regression
@@ -33,51 +48,36 @@ def main():
     # "mlp" - multiple layer perceptron
     #############################################
     model_name = "rf"
-
-
-    config = Configuration.from_file("config.json")
-
-    output_dir = config.get_str("general.output_dir", "./outputs")
-    os.makedirs(output_dir, exist_ok=True)
-
-    tracker = Tracker(
-        save_dir=output_dir,
-        experiment_name=model_name,
-        filename="metrics.csv"
-    )
-
-
-    model_params = Configuration.load_model_config("model_param_grids.json", model_name)
+    # call configs matched with each models
+    model_config = Configuration.load_model_config("model_param_grids.json", model_name)
 
     # tuner
-    tuning_
+    tuning_method = model_config["tuning_method"]
+    # choose tuner from model config
+    tuner = get_tuner(model_name, model_config=model_config, tracker=tracker, scoring="f1", cv=5, random_state=random_seed)
 
     print(f"Training is ready... Model: {model_name} | Tuning_method: {tuning_method} | Output directory: {output_dir}\n")
 
-    print("\n================ Training with Validation Evaluation ================")
-    #model = train(X_train_tfidf, y_train, tracker=tracker, epochs=epochs, lr=lr, threshold=threshold)
+    print("\n##### Hyperparameter Search #####")
+    search_result = tuner.fit(X_train_tfidf, y_train)
 
-    learning_rates = [6.0, 7.0, 8.0, 8.5, 9.0, 9.5]
+    print("Hyperparameter experiment is finished...")
+    print(f"Best params: {search_result['best_params']} | Best validation score: {search_result['best_score']:.4f}\n")
 
-    best_lr = None
-    best_f1 = -1
+    # TODO: load best model
 
-    for lr in learning_rates:
-        print(f"\n===== lr = {lr} =====")
-        model, f1 = train(X_train_tfidf, y_train, tracker=tracker, epochs=epochs, lr=lr, threshold=threshold)
+    print("\n##### Final Test Evaluation #####")
+    test_result = evaluation_final(
+        model=search_result["best_model"],
+        X_test=X_test_tfidf,
+        y_test=y_test,
+        tracker=tracker,
+        best_params=search_result["best_params"]
+    )
 
-        if f1 > best_f1:
-            best_f1 = f1
-            best_lr = lr
-
-    print(f"\nBest learning rate: {best_lr} | Best validation F1: {best_f1:.4f}")
-
-    print("\n================ Final Training ================")
-    final_model = MyLogisticRegression(epochs, best_lr, threshold)
-    final_model.fit(X_train_tfidf, y_train, tracker=tracker)
-
-    print("\n================ Testing ================")
-    evaluate(final_model, X_test_tfidf, y_test, tracker=tracker)
+    print("Evaluation is finished...")
+    print(f"Best params: {search_result["best_params"]} | Best validation score: {search_result["best_score"]:.4f}\n")
+    print(f"Result saved in: {output_dir}")
 
 if __name__ == "__main__":
     main()

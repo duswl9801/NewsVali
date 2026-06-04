@@ -1,11 +1,10 @@
 import os
-
-from old.utils import Configuration
-from old.utils import Tracker
-from models.MyLogisticRegression import MyLogisticRegression
-from old.utils import *
-
 from sklearn.model_selection import train_test_split
+
+from utils.configuration import Configuration
+from utils.tracker import Tracker
+from models.MyLogisticRegression import MyLogisticRegression
+from evaluation.metrics_clf import *
 
 # training and validation
 def train(X_train, y_train, tracker, epochs, lr, threshold):
