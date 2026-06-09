@@ -39,6 +39,60 @@ class RandomCVTuner:
         self.n_iter = n_iter
         self.random_state = random_state
 
+    def _log_cv_results(self, search):
+        cv_results = search.cv_results_
+
+        for i, params in enumerate(cv_results["params"]):
+            self.tracker.write_row({
+                "candidate": i + 1,
+                "model_name": self.model_name,
+                "tuning_method": "random_cv",
+                "hyperparams": json.dumps(params),
+
+                "mean_train_score": cv_results.get("mean_train_score", [""])[i],
+                "mean_val_score": cv_results["mean_test_score"][i],
+                "std_val_score": cv_results["std_test_score"][i],
+                "rank": cv_results["rank_test_score"][i],
+
+                "mean_fit_time": cv_results["mean_fit_time"][i],
+                "std_fit_time": cv_results["std_fit_time"][i],
+                "mean_score_time": cv_results["mean_score_time"][i],
+                "std_score_time": cv_results["std_score_time"][i],
+
+                "random_seed": self.random_state,
+                "note": "candidate"
+            })
+
+    def _log_best_result(self, search, X_train, y_train, best_model_path):
+        best_model = search.best_estimator_
+        best_idx = search.best_index_
+
+        train_pred = best_model.predict(X_train)
+        train_acc = accuracy(y_train, train_pred)
+
+        cv_results = search.cv_results_
+
+        self.tracker.write_row({
+            "candidate": "best",
+            "model_name": self.model_name,
+            "tuning_method": "random_cv",
+            "hyperparams": json.dumps(search.best_params_),
+
+            "mean_train_score": cv_results.get("mean_train_score", [""])[best_idx],
+            "mean_val_score": search.best_score_,
+            "std_val_score": cv_results["std_test_score"][best_idx],
+            "rank": cv_results["rank_test_score"][best_idx],
+
+            "mean_fit_time": cv_results["mean_fit_time"][best_idx],
+            "std_fit_time": cv_results["std_fit_time"][best_idx],
+            "mean_score_time": cv_results["mean_score_time"][best_idx],
+            "std_score_time": cv_results["std_score_time"][best_idx],
+
+            "final_train_acc": train_acc,
+            "random_seed": self.random_state,
+            "note": f"best_model_saved:{best_model_path}"
+        })
+
     def _save_model(self, model, note="best_model"):
         model_dir = os.path.join(self.tracker.save_dir, "models")
         os.makedirs(model_dir, exist_ok=True)
@@ -62,40 +116,40 @@ class RandomCVTuner:
             scoring=self.scoring,
             cv=self.cv,
             random_state=self.random_state,
-            return_train_score=True
+            return_train_score=True,
+            verbose=2,
+            n_jobs=-1
         )
 
         search.fit(X_train, y_train)
 
-        # TODO: tracker
+        # tracker - save every random search candidate result
+        self._log_cv_results(search)
+
         best_model = search.best_estimator_
         best_params = search.best_params_
-        best_score = search.best_score_
 
-        # save best model
+        best_idx = search.best_index_
+        cv_results = search.cv_results_
+
+        best_train_score = cv_results["mean_train_score"][best_idx]
+        best_val_score = search.best_score_
         best_model_path = self._save_model(best_model, note="best_model")
 
-        train_pred = best_model.predict(X_train)
-        train_acc = accuracy(y_train, train_pred)
-
-        # save best model row
-        self.tracker.write_row({
-            "model_name": self.model_name,
-            "tuning_method": "random_cv",
-            "hyperparams": json.dumps(best_params),
-
-            "train_acc": train_acc,
-            "train_loss": "",
-            "val_acc": best_score,
-            "val_loss": "",
-
-            "random_seed": self.random_state,
-            "note": ""
-        })
+        # calculate best model train accuracy on full training data
+        # and save best model summary row
+        self._log_best_result(
+            search=search,
+            X_train=X_train,
+            y_train=y_train,
+            best_model_path=best_model_path
+        )
 
         return {
-            "best_model": search.best_estimator_,
-            "best_params": search.best_params_,
-            "best_score": search.best_score_,
-            "cv_results": search.cv_results_
+            "best_model": best_model,
+            "best_params": best_params,
+            "best_train_score": best_train_score,
+            "best_val_score": best_val_score,
+            "cv_results": cv_results,
+            "best_model_path": best_model_path
         }

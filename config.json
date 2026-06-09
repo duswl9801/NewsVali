@@ -3,7 +3,7 @@
 		"output_dir": "./outputs",
 		"data_dir": "./dataset",
 		"history_name": "metrics",
-		"ramdom_seed": 42,
+		"random_seed": 42,
 		"scoring": "f1",
 		"tracker": {
 			"columns": [
@@ -36,6 +36,10 @@
 		"txt_len": "",
 		"img_h": "",
 		"img_w": ""
+	},
+	"app": {
+		"model_dir": "./outputs/models"
+
 	},
 	"model": {
 		"epochs": 200,

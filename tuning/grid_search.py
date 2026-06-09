@@ -1,6 +1,12 @@
+import os
+import json
+import joblib
+
 from sklearn.model_selection import GridSearchCV
 
 from models.model_registry import get_model
+from evaluation.metrics_clf import *
+
 
 """
 GridCVTuner is for grid search hyperparameter tuning.
@@ -25,6 +31,71 @@ class GridCVTuner:
         self.scoring = scoring
         self.cv = cv
 
+    def _log_cv_results(self, search):
+        cv_results = search.cv_results_
+
+        for i, params in enumerate(cv_results["params"]):
+            self.tracker.write_row({
+                "candidate": i + 1,
+                "model_name": self.model_name,
+                "tuning_method": "grid_cv",
+                "hyperparams": json.dumps(params),
+
+                "mean_train_score": cv_results.get("mean_train_score", [""])[i],
+                "mean_val_score": cv_results["mean_test_score"][i],
+                "std_val_score": cv_results["std_test_score"][i],
+                "rank": cv_results["rank_test_score"][i],
+
+                "mean_fit_time": cv_results["mean_fit_time"][i],
+                "std_fit_time": cv_results["std_fit_time"][i],
+                "mean_score_time": cv_results["mean_score_time"][i],
+                "std_score_time": cv_results["std_score_time"][i],
+
+                "note": "candidate"
+            })
+
+    def _log_best_result(self, search, X_train, y_train, best_model_path):
+        best_model = search.best_estimator_
+        best_idx = search.best_index_
+
+        train_pred = best_model.predict(X_train)
+        train_acc = accuracy(y_train, train_pred)
+
+        cv_results = search.cv_results_
+
+        self.tracker.write_row({
+            "candidate": "best",
+            "model_name": self.model_name,
+            "tuning_method": "grid_cv",
+            "hyperparams": json.dumps(search.best_params_),
+
+            "mean_train_score": cv_results.get("mean_train_score", [""])[best_idx],
+            "mean_val_score": search.best_score_,
+            "std_val_score": cv_results["std_test_score"][best_idx],
+            "rank": cv_results["rank_test_score"][best_idx],
+
+            "mean_fit_time": cv_results["mean_fit_time"][best_idx],
+            "std_fit_time": cv_results["std_fit_time"][best_idx],
+            "mean_score_time": cv_results["mean_score_time"][best_idx],
+            "std_score_time": cv_results["std_score_time"][best_idx],
+
+            "final_train_acc": train_acc,
+            "note": f"best_model_saved:{best_model_path}"
+        })
+
+    def _save_model(self, model, note="best_model"):
+        model_dir = os.path.join(self.tracker.save_dir, "models")
+        os.makedirs(model_dir, exist_ok=True)
+
+        model_path = os.path.join(
+            model_dir,
+            f"{self.model_name}_{note}_grid_search.pkl"
+        )
+
+        joblib.dump(model, model_path)
+
+        return model_path
+
     def fit(self, X_train, y_train):
         base_model = get_model(self.model_name, fixed_params=self.fixed_params)
 
@@ -33,17 +104,40 @@ class GridCVTuner:
             param_grid=self.params,
             scoring=self.scoring,
             cv=self.cv,
-            n_jobs=-1,
-            verbose=1
+            return_train_score=True,
+            n_jobs=4,
+            verbose=2
         )
 
         search.fit(X_train, y_train)
 
-        # TODO: tracker
+        # tracker - save every grid search candidate result
+        self._log_cv_results(search)
+
+        best_model = search.best_estimator_
+        best_params = search.best_params_
+
+        best_idx = search.best_index_
+        cv_results = search.cv_results_
+
+        best_train_score = cv_results["mean_train_score"][best_idx]
+        best_val_score = search.best_score_
+        best_model_path = self._save_model(best_model, note="best_model")
+
+        # calculate best model train accuracy on full training data
+        # and save best model summary row
+        self._log_best_result(
+            search=search,
+            X_train=X_train,
+            y_train=y_train,
+            best_model_path=best_model_path
+        )
 
         return {
-            "best_model": search.best_estimator_,
-            "best_params": search.best_params_,
-            "best_score": search.best_score_,
-            "cv_results": search.cv_results_
+            "best_model": best_model,
+            "best_params": best_params,
+            "best_train_score": best_train_score,
+            "best_val_score": best_val_score,
+            "cv_results": cv_results,
+            "best_model_path": best_model_path
         }

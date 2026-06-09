@@ -12,7 +12,7 @@ from evaluation.evaluation import *
 def main():
 
     # ------------------------------------------
-    # prepare dataset
+    # Prepare Dataset
     # ------------------------------------------
     vectorizer_path = "../dataset/tfidf_vectorizer.pkl"
     x_train_path = "../dataset/X_train_tfidf.npz"
@@ -23,6 +23,9 @@ def main():
     vectorizer, X_train_tfidf, X_test_tfidf, y_train, y_test = (
         load_data(vectorizer_path, x_train_path, x_test_path, y_train_path, y_test_path))
 
+    # ------------------------------------------
+    # Configuration Setup
+    # ------------------------------------------
     print("\n##### Start Environment Setting #####")
     config = Configuration.from_file("config.json")
 
@@ -51,10 +54,12 @@ def main():
     # call configs matched with each models
     model_config = Configuration.load_model_config("model_param_grids.json", model_name)
 
+    # scoring
+    scoring = config.get_str("general.scoring", "f1")
     # tuner
     tuning_method = model_config["tuning_method"]
     # choose tuner from model config
-    tuner = get_tuner(model_name, model_config=model_config, tracker=tracker, scoring="f1", cv=5, random_state=random_seed)
+    tuner = get_tuner(model_name, model_config=model_config, tracker=tracker, scoring=scoring, cv=5, random_state=random_seed)
 
     print(f"Training is ready... Model: {model_name} | Tuning_method: {tuning_method} | Output directory: {output_dir}\n")
 
@@ -66,7 +71,8 @@ def main():
 
     # TODO: load best model
 
-    print("\n##### Final Test Evaluation #####")
+    #print("\n##### Final Test Evaluation #####")
+    """
     test_result = evaluation_final(
         model=search_result["best_model"],
         X_test=X_test_tfidf,
@@ -74,10 +80,11 @@ def main():
         tracker=tracker,
         best_params=search_result["best_params"]
     )
+    """
 
-    print("Evaluation is finished...")
-    print(f"Best params: {search_result["best_params"]} | Best validation score: {search_result["best_score"]:.4f}\n")
-    print(f"Result saved in: {output_dir}")
+    #print("Evaluation is finished...")
+    #print(f"Best params: {search_result["best_params"]} | Best validation score: {search_result["best_score"]:.4f}\n")
+    #print(f"Result saved in: {output_dir}")
 
 if __name__ == "__main__":
     main()

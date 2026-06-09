@@ -1,4 +1,5 @@
 from evaluation.metrics_clf import *
+from utils.util import *
 
 def evaluate(model, X_test, y_test, tracker):
     y_prob, y_pred = model.predict(X_test)
@@ -30,5 +31,10 @@ def evaluate(model, X_test, y_test, tracker):
 
     return
 
-def evaluation_final(best_model, ):
-    # TODO: evaluate with final model
+def evaluation_final(best_model, vectorizor, X_test, y_test, tracker, threshold=0.5):
+    # load best model
+    model, vectorizor = load_model_artifacts(best_model, vectorizor)
+
+    evaluate(model, X_test, y_test, tracker)
+
+    # TODO: use threshold

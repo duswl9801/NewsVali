@@ -22,7 +22,7 @@ class Tracker:
     def __init__(self, save_dir, experiment_name="temp_experiment", filename="temp_metrics.csv", columns=None):
         self.save_dir = save_dir
         self.experiment_name = experiment_name
-        self.file_path = os.path.join(save_dir, filename)
+        self.file_path = os.path.join(save_dir, f"{experiment_name}_{filename}")
         self.columns = columns
 
         os.makedirs(save_dir, exist_ok=True)

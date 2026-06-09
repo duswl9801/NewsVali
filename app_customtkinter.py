@@ -1,4 +1,18 @@
+import os
+import re
+from pathlib import Path
+
 import customtkinter as ctk
+import joblib
+
+from utils.configuration import Configuration
+
+config = Configuration.from_file("config.json")
+model_dir = config.get_str("app.model_dir", "./outputs/models")
+model_name = "rf_grid_best_model_grid_search.pkl"
+MODEL = os.path.join(model_dir, model_name)
+
+VECTORIZER = "dataset/tfidf_vectorizer.pkl"
 
 class NewsVerificationApp(ctk.CTk):
     def __init__(self):
@@ -128,6 +142,8 @@ class NewsVerificationApp(ctk.CTk):
                 ),
             },
         ]
+
+        self.model, self.vectorizer = self._load_model_artifacts(MODEL, VECTORIZER)
 
         self.selected_sentence_index = 0
         self.sentence_ranges = []  # stores start/end indices in textbox
@@ -301,7 +317,12 @@ class NewsVerificationApp(ctk.CTk):
     def _build_bottom_row(self):
         self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.bottom_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=22, pady=(0, 20))
-        self.bottom_frame.grid_columnconfigure(1, weight=1)
+        self.bottom_frame.grid_columnconfigure(0, weight=0)
+        self.bottom_frame.grid_columnconfigure(1, weight=0)
+        self.bottom_frame.grid_columnconfigure(2, weight=0)
+        self.bottom_frame.grid_columnconfigure(3, weight=1)
+        self.bottom_frame.grid_columnconfigure(4, weight=0)
+        self.bottom_frame.grid_columnconfigure(5, weight=0)
 
         self.load_demo_button = ctk.CTkButton(
             self.bottom_frame,
@@ -322,7 +343,33 @@ class NewsVerificationApp(ctk.CTk):
             font=ctk.CTkFont(size=13, weight="bold"),
             text_color=self.soft_text,
         )
-        self.theme_label.grid(row=0, column=1, sticky="e", padx=(0, 8))
+        self.theme_label.grid(row=0, column=4, sticky="e", padx=(0, 8))
+
+        self.run_model_button = ctk.CTkButton(
+            self.bottom_frame,
+            text="Run Model Test",
+            height=46,
+            corner_radius=14,
+            fg_color=self.accent,
+            hover_color=self.accent_hover,
+            text_color="#0b1220",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            command=self.run_model_test,
+        )
+        self.run_model_button.grid(row=0, column=1, sticky="w", padx=(10, 0))
+
+        self.clear_button = ctk.CTkButton(
+            self.bottom_frame,
+            text="Clear",
+            height=46,
+            corner_radius=14,
+            fg_color=self.card_color,
+            hover_color=self.selected_fill,
+            text_color=self.main_text,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            command=self.clear_article,
+        )
+        self.clear_button.grid(row=0, column=2, sticky="w", padx=(10, 0))
 
         self.theme_menu = ctk.CTkOptionMenu(
             self.bottom_frame,
@@ -340,7 +387,177 @@ class NewsVerificationApp(ctk.CTk):
             font=ctk.CTkFont(size=14),
         )
         self.theme_menu.set(self.current_theme_name)
-        self.theme_menu.grid(row=0, column=2, sticky="e")
+        self.theme_menu.grid(row=0, column=5, sticky="e")
+
+    def _load_model_artifacts(self, model_path, vectorizer):
+        """
+        Load a trained sklearn model.
+
+        supported options:
+        1. models/best_pipeline.pkl
+           - a single sklearn Pipeline that already includes TF-IDF + classifier
+        2. models/tfidf_vectorizer.pkl + models/best_model.pkl
+           - separate vectorizer and classifier
+
+        If no model file exists, the app still runs with a simple heuristic fallback
+        so the UI can be tested before the final model is connected.
+        """
+        #pipeline_path = Path("models/best_pipeline.pkl")
+        vectorizer = joblib.load(vectorizer)
+        model = joblib.load(model_path)
+
+        #if pipeline_path.exists():
+        #    return joblib.load(pipeline_path), None
+
+        return model, vectorizer
+
+
+    def _split_into_sentences(self, article_text):
+        """Split pasted article text into sentence-like units without extra dependencies."""
+        clean_text = re.sub(r"\s+", " ", article_text).strip()
+        if not clean_text:
+            return []
+
+        # handles most news sentences ending with ., ?, or !
+        sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z0-9\"“])", clean_text)
+        return [sentence.strip() for sentence in sentences if len(sentence.strip()) > 5]
+
+    def run_model_test(self):
+        """Read pasted article text, run sentence-level prediction, and refresh highlights/output."""
+        article_text = self.input_box.get("1.0", "end-1c").strip()
+        sentences = self._split_into_sentences(article_text)
+
+        if not sentences:
+            self.sentences = []
+            self.sentence_results = []
+            self.apply_highlights_to_article()
+            self.selected_sentence_value.configure(text="Paste an article first.")
+            self.label_value.configure(text="-")
+            self.prob_value.configure(text="-")
+            self.reason_value.configure(text="-")
+            return
+
+        self.sentences = sentences
+        self.sentence_results = [self._predict_sentence(sentence) for sentence in sentences]
+
+        print("\n===== sentence prediction results =====")
+        for i, (sentence, result) in enumerate(zip(self.sentences, self.sentence_results), start=1):
+            print(f"[{i}] {result['label']} | score={result['probability']}")
+            print(sentence)
+            print()
+
+        self.apply_highlights_to_article()
+        self.select_sentence(0)
+
+    def _predict_sentence(self, sentence):
+        """Return one UI-ready result dictionary for a sentence."""
+        probability = self._predict_need_verification_probability(sentence)
+
+        if probability >= 0.80:
+            label = "needs verification"
+        elif probability >= 0.64:
+            label = "suspicious"
+        else:
+            label = "likely reliable"
+
+        return {
+            "label": label,
+            "probability": f"{probability:.2f}",
+            "why_flagged": self._build_reason(sentence, probability, label),
+        }
+
+    def _predict_need_verification_probability(self, sentence):
+        """Predict probability for the positive/check-worthy class."""
+        if self.model is None:
+            return self._heuristic_probability(sentence)
+
+        X = [sentence]
+        if self.vectorizer is not None:
+            X = self.vectorizer.transform(X)
+
+        if hasattr(self.model, "predict_proba"):
+            probabilities = self.model.predict_proba(X)[0]
+            classes = list(getattr(self.model, "classes_", []))
+            positive_index = self._positive_class_index(classes)
+            return float(probabilities[positive_index])
+
+        if hasattr(self.model, "decision_function"):
+            score = float(self.model.decision_function(X)[0])
+            return 1 / (1 + pow(2.718281828, -score))
+
+        prediction = self.model.predict(X)[0]
+        return 0.75 if str(prediction).lower() in {"1", "true", "needs verification", "check-worthy"} else 0.25
+
+    def _positive_class_index(self, classes):
+        """Find the index for the positive class used by the trained model."""
+        positive_names = {"1", "true", "needs verification", "need verification", "check-worthy", "checkworthy"}
+        for idx, class_name in enumerate(classes):
+            if str(class_name).strip().lower() in positive_names:
+                return idx
+        return 1 if len(classes) > 1 else 0
+
+    def _heuristic_probability(self, sentence):
+        """Temporary fallback until the saved model files are connected."""
+        s = sentence.lower()
+        score = 0.15
+
+        risky_words = [
+            "confirmed", "proved", "study", "report", "according to", "officials",
+            "bill", "senate", "house", "court", "lawsuit", "ipo", "billion",
+            "million", "percent", "%", "rise", "increase", "decrease", "reduced",
+        ]
+        score += 0.10 * sum(word in s for word in risky_words)
+
+        if re.search(r"\$?\d+(\.\d+)?\s?(%|percent|million|billion|trillion)?", sentence):
+            score += 0.25
+
+        if any(quote in sentence for quote in ['"', "“", "”"]):
+            score += 0.08
+
+        return min(score, 0.95)
+
+    def _build_reason(self, sentence, probability, label):
+        """Create a short explanation for the selected sentence."""
+        reasons = []
+        lower_sentence = sentence.lower()
+
+        if re.search(r"\$?\d+(\.\d+)?\s?(%|percent|million|billion|trillion)?", sentence):
+            reasons.append("• Contains a numerical or financial claim")
+        if any(word in lower_sentence for word in ["study", "report", "according to", "officials", "analysts"]):
+            reasons.append("• References a study, report, official, or analyst source")
+        if any(word in lower_sentence for word in
+               ["senate", "house", "bill", "court", "lawsuit", "government", "policy"]):
+            reasons.append("• Mentions a political, legal, or policy-related claim")
+        if any(word in lower_sentence for word in ["proved", "confirmed", "best", "worst", "always", "never"]):
+            reasons.append("• Uses strong or assertive wording")
+
+        if not reasons:
+            if label == "likely reliable":
+                reasons.append("• Low-risk sentence with no strong factual or numerical claim detected")
+            else:
+                reasons.append("• Model score suggests this sentence may need follow-up checking")
+
+        reasons.append(f"• Model score: {probability:.2f}")
+        return "\n".join(reasons)
+
+    def clear_article(self):
+        """Clear article input and output panel."""
+        text_widget = self.input_box._textbox
+        text_widget.config(state="normal")
+        text_widget.delete("1.0", "end")
+
+        self.sentences = []
+        self.sentence_results = []
+        self.sentence_ranges = []
+        self.highlight_tag_map = {}
+        self.selected_sentence_index = 0
+
+        self.selected_sentence_value.configure(text="-")
+        self.label_value.configure(text="-")
+        self.prob_value.configure(text="-")
+        self.reason_value.configure(text="-")
+
+        text_widget.config(state="normal")
 
     def load_demo_content(self):
         self.url_entry.delete(0, "end")
@@ -412,7 +629,7 @@ class NewsVerificationApp(ctk.CTk):
 
             text_widget.insert("end", " ")
 
-        text_widget.config(state="disabled")
+        text_widget.config(state="normal")
 
     def select_sentence(self, index):
         self.selected_sentence_index = index
