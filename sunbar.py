@@ -1,12 +1,13 @@
 import os
 
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 
 from tuning.tuning_registry import get_tuner
 from utils.configuration import Configuration
 from utils.tracker import Tracker
+from utils.suntifier import Suntifier, NotiInfo
 from utils.util import *
 from evaluation.evaluation import *
 
@@ -16,10 +17,14 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.prompt import Prompt, Confirm
 from rich.align import Align
-from rich import box
 from pyfiglet import Figlet
 
+from dotenv import load_dotenv
+
 console = Console()
+
+load_dotenv()
+notifier = Suntifier()
 
 def print_logo(text="NEWSVALI", clear=True):
     console.clear()
@@ -89,7 +94,7 @@ def run_training(model_name, model_configs, X_train_tfidf, y_train, X_test_tfidf
         f"Tuning method: [yellow]{tuning_method}[/yellow]\n"
     )
 
-    console.print("[bold cyan]##### Hyperparameter Search #####[/bold cyan]")
+    console.rule("[bold cyan]✦ Hyperparameter Search ✦[/bold cyan]", style="bright_cyan")
     search_result = tuner.fit(X_train_tfidf, y_train)
 
     console.print("\n[bold green]Hyperparameter experiment is finished.[/bold green]")
@@ -98,7 +103,7 @@ def run_training(model_name, model_configs, X_train_tfidf, y_train, X_test_tfidf
     console.print(f"Best validation score: {search_result['best_val_score']:.4f}")
 
     if run_test:
-        console.print("\n[bold cyan]##### Final Test Evaluation #####[/bold cyan]")
+        console.rule("[bold magenta]◆ Final Test Evaluation ◆[/bold magenta]", style="magenta")
 
         test_result = evaluation_final(
             model=search_result["best_model"],
@@ -158,27 +163,56 @@ def train_flow(model_name, model_configs, X_train_tfidf, y_train, X_test_tfidf, 
         console.print("[yellow]Cancelled.[/yellow]")
         return
 
-    search_result = run_training(
-        model_name=model_name,
-        model_configs=model_configs,
-        X_train_tfidf=X_train_tfidf,
-        y_train=y_train,
-        X_test_tfidf=X_test_tfidf,
-        y_test=y_test,
-        tracker=tracker,
-        scoring=scoring,
-        random_seed=random_seed,
-        run_test=run_test
-    )
+    start_time = time.time()
 
-    console.print("\n[bold green]Experiment finished.[/bold green]")
-
-    if show_result:
-        show_cv_result_chart(
-            search_result=search_result,
-            output_dir=tracker.save_dir,
-            model_name=model_name
+    try:
+        search_result = run_training(
+            model_name=model_name,
+            model_configs=model_configs,
+            X_train_tfidf=X_train_tfidf,
+            y_train=y_train,
+            X_test_tfidf=X_test_tfidf,
+            y_test=y_test,
+            tracker=tracker,
+            scoring=scoring,
+            random_seed=random_seed,
+            run_test=run_test
         )
+
+        runtime = notifier.format_runtime(time.time() - start_time)
+
+        notifier.send(
+            NotiInfo(
+                experiment_name=model_name,
+                success=True,
+                runtime=runtime,
+                metrics={
+                    "best_train": search_result.get("best_train_score"),
+                    "best_val": search_result.get("best_val_score"),
+                },
+            )
+        )
+
+        console.print("\n[bold green]Experiment finished.[/bold green]")
+
+        if show_result:
+            show_cv_result_chart(
+                search_result=search_result,
+                output_dir=tracker.save_dir,
+                model_name=model_name
+            )
+
+    except BaseException as e:
+        notifier.send(
+            NotiInfo(
+                experiment_name=model_name,
+                success=False,
+                error_message=f"{type(e).__name__}: {e}",
+            )
+        )
+
+        console.print(f"\n[bold red]Experiment failed:[/bold red] {e}")
+        raise
 
 def test_saved_model(model_name, model_configs):
     # TODO: add evaluation code(evaluation.py)

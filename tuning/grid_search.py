@@ -1,8 +1,9 @@
 import os
 import json
 import joblib
+import pandas as pd
 
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_val_predict
 
 from models.model_registry import get_model
 from evaluation.metrics_clf import *
@@ -96,6 +97,68 @@ class GridCVTuner:
 
         return model_path
 
+    def _save_oof_validation_scores(self, best_params, X_train, y_train):
+        """
+        Save out-of-fold validation scores for the best hyperparameters.
+
+        Each score is produced when that sample was in the validation fold,
+        not when the model was trained on that same sample.
+        """
+
+        final_params = self.fixed_params.copy()
+        final_params.update(best_params)
+
+        model = get_model(self.model_name, fixed_params=final_params)
+
+        output_dir = self.tracker.save_dir
+        os.makedirs(output_dir, exist_ok=True)
+
+        if hasattr(model, "predict_proba"):
+            oof_scores = cross_val_predict(
+                model,
+                X_train,
+                y_train,
+                cv=self.cv,
+                method="predict_proba",
+                n_jobs=8
+            )[:, 1]
+
+            score_type = "probability"
+            oof_pred = (oof_scores >= 0.5).astype(int)
+
+        elif hasattr(model, "decision_function"):
+            oof_scores = cross_val_predict(
+                model,
+                X_train,
+                y_train,
+                cv=self.cv,
+                method="decision_function",
+                n_jobs=8
+            )
+
+            score_type = "decision_score"
+            oof_pred = (oof_scores >= 0).astype(int)
+
+        else:
+            return None
+
+        df = pd.DataFrame({
+            "sample_index": range(len(y_train)),
+            "y_true": y_train,
+            "oof_score": oof_scores,
+            "score_type": score_type,
+            "oof_pred_default": oof_pred
+        })
+
+        score_path = os.path.join(
+            output_dir,
+            f"{self.model_name}_oof_validation_scores.csv"
+        )
+
+        df.to_csv(score_path, index=False)
+
+        return score_path
+
     def fit(self, X_train, y_train):
         base_model = get_model(self.model_name, fixed_params=self.fixed_params)
 
@@ -105,7 +168,7 @@ class GridCVTuner:
             scoring=self.scoring,
             cv=self.cv,
             return_train_score=True,
-            n_jobs=4,
+            n_jobs=8,
             verbose=2
         )
 
@@ -124,6 +187,12 @@ class GridCVTuner:
         best_val_score = search.best_score_
         best_model_path = self._save_model(best_model, note="best_model")
 
+        oof_score_path = self._save_oof_validation_scores(
+            best_params=best_params,
+            X_train=X_train,
+            y_train=y_train
+        )
+
         # calculate best model train accuracy on full training data
         # and save best model summary row
         self._log_best_result(
@@ -141,3 +210,5 @@ class GridCVTuner:
             "cv_results": cv_results,
             "best_model_path": best_model_path
         }
+
+

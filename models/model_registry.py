@@ -24,8 +24,6 @@ def get_model(model_name, fixed_params=None):
     else:
         raise ValueError(f"Unknown model name: {model_name}")
 
-
-
 def old_get_model(model_name, params, random_state=42):
     if model_name == "my_logistic_regression":
         return MyLogisticRegression(epochs=params["epochs"], lr=params["learning_rate"], threshold=params["threshold"])

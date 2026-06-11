@@ -2,8 +2,12 @@
     "my_logistic_regression": {
         "tuning_method": "manual_holdout",
         "fixed_params": {"epochs": 50},
-        "params": {
-            "learning_rate": [6.0, 7.0, 8.0, 8.5, 9.0, 9.5],
+        "params_1": {
+            "learning_rate": 6.5,
+            "threshold": [0.35, 0.4, 0.45, 0.5]
+        },
+        "params_2": {
+            "learning_rate": 6.0,
             "threshold": [0.35, 0.4, 0.45, 0.5]
         }
     },
@@ -11,24 +15,14 @@
         "tuning_method": "grid_cv",
         "fixed_params": {
             "max_iter": 1000,
-            "random_state": 22
+            "solver": "liblinear",
+            "class_weight": "balanced"
         },
         "params": {
-            "C": [0.01, 0.1, 1, 10, 100],
-            "penalty": ["l2"],
-            "solver": ["liblinear", "lbfgs"],
-            "class_weight": [null, "balanced"]
-        }
-    },
-    "svm": {
-        "tuning_method": "grid_cv",
-        "fixed_params": {
-            "max_iter": 5000,
-            "random_state": 22
+            "C": [0.01, 0.1, 1, 10, 100]
         },
-        "params": {
-            "C": [0.01, 0.1, 1, 10, 100],
-            "class_weight": [null, "balanced"]
+        "search_params": {
+            "cv": 5
         }
     },
     "rf_random": {
@@ -86,7 +80,6 @@
     "gb_grid": {
         "tuning_method": "grid_cv",
         "fixed_params": {
-
         },
         "params": {
             "n_estimators": [100, 200, 300, 500],
@@ -97,14 +90,26 @@
             "min_samples_leaf": [1, 2, 5]
         },
         "search_params": {
-            "n_iter": 20
+            "cv": 5
+        }
+    },
+    "svm_grid": {
+        "tuning_method": "grid_cv",
+        "fixed_params": {
+            "max_iter": 5000,
+            "class_weight": "balanced"
+        },
+        "params": {
+            "C": [0.03, 0.05, 0.1, 0.3, 0.5]
+        },
+        "search_params": {
+            "cv": 5
         }
     },
     "mlp": {
         "tuning_method": "random_cv",
         "fixed_params": {
             "max_iter": 500,
-            "random_state": 22,
             "early_stopping": true
         },
         "params": {
