@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import time
+from pathlib import Path
 
 from tuning.tuning_registry import get_tuner
 from utils.configuration import Configuration
@@ -105,7 +106,7 @@ def run_training(model_name, model_configs, X_train_tfidf, y_train, X_test_tfidf
     if run_test:
         console.rule("[bold magenta]◆ Final Test Evaluation ◆[/bold magenta]", style="magenta")
 
-        test_result = evaluation_final(
+        test_result = evaluate(
             model=search_result["best_model"],
             X_test=X_test_tfidf,
             y_test=y_test,
@@ -214,11 +215,30 @@ def train_flow(model_name, model_configs, X_train_tfidf, y_train, X_test_tfidf, 
         console.print(f"\n[bold red]Experiment failed:[/bold red] {e}")
         raise
 
-def test_saved_model(model_name, model_configs):
-    # TODO: add evaluation code(evaluation.py)
-    console.print(f"[yellow]TODO: test saved model for {model_name}[/yellow]")
+def show_saved_model(model_dir):
+    model_dir = Path(model_dir)
 
-def test_flow(model_name, model_configs):
+    model_paths = sorted(model_dir.glob("*.pkl"))
+
+    if not model_paths:
+        console.print("[yellow]No saved .pkl models found in outputs/models.[/yellow]")
+        model_path = Prompt.ask("Enter saved model path manually")
+        return model_path
+
+    choices = [str(path) for path in model_paths]
+    choices.append("Enter path manually")
+
+    selected = questionary.select(
+        "Select saved model to test:",
+        choices=choices
+    ).ask()
+
+    if selected == "Enter path manually":
+        return Prompt.ask("Enter saved model path")
+
+    return selected
+
+def test_flow(model_dir, model_name, X_test_tfidf, y_test, tracker):
     console.clear()
     print_logo()
 
@@ -229,9 +249,25 @@ def test_flow(model_name, model_configs):
         )
     )
 
-    test_saved_model(model_name=model_name, model_configs=model_configs)
+    model_path = show_saved_model(model_dir)
+    if not os.path.exists(model_path):
+        console.print(f"[bold red]Model file does not exist:[/bold red] {model_path}")
+        return None
+
+    console.print(f"[green]Loading model[/green] {model_path}...")
+    model = joblib.load(model_path)
+
+    result = evaluate(
+        model=model,
+        X_test=X_test_tfidf,
+        y_test=y_test,
+        tracker=tracker,
+        best_params={"loaded_from": model_path}
+    )
 
     console.print("\n[bold green]Test finished.[/bold green]")
+
+    return result
 
 def show_cv_result_chart(search_result, output_dir, model_name):
     df = get_cv_results_df(search_result)
@@ -396,15 +432,21 @@ def main():
             input("\nPress Enter to return to menu...")
 
         elif action == "Test saved best model":
+            model_dir = config.get_str("general.model_dir", "./outputs/models")
+
             model_name = select_model(model_configs)
+
+            test_dir = os.path.join(output_dir, "test")
+            os.makedirs(test_dir, exist_ok=True)
 
             tracker = Tracker(
                 save_dir=output_dir,
                 experiment_name=model_name,
-                filename="metrics.csv"
+                filename="test.csv"
             )
 
-            test_flow(model_name, model_configs)
+            test_flow(model_dir, model_name, X_test_tfidf, y_test, tracker)
+
             input("\nPress Enter to return to menu...")
 
         elif action == "Show available models":
@@ -413,6 +455,12 @@ def main():
             input("\nPress Enter to return to menu...")
 
         elif action == "Show experiment results":
+            model_dir = config.get_str("general.model_dir", "./outputs/models")
+            if model_dir is None:
+                console.print("[red]Result viewer will be added later.[/red]")
+
+
+
             console.print("[yellow]Result viewer will be added later.[/yellow]")
             input("\nPress Enter to return to menu...")
 

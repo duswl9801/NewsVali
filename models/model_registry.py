@@ -1,9 +1,8 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import LinearSVC
-from sklearn.neural_network import MLPClassifier
 
-from models.MyLogisticRegression import MyLogisticRegression
+from old.MyLogisticRegression import MyLogisticRegression
 
 def get_model(model_name, fixed_params=None):
     if fixed_params is None:

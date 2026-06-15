@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 
 from utils.configuration import Configuration
 from utils.tracker import Tracker
-from models.MyLogisticRegression import MyLogisticRegression
+from old.MyLogisticRegression import MyLogisticRegression
 from evaluation.metrics_clf import *
 
 # training and validation

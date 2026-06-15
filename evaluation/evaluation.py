@@ -1,8 +1,40 @@
+import numpy as np
+import joblib
+
 from evaluation.metrics_clf import *
 from utils.util import *
 
-def evaluate(model, X_test, y_test, tracker):
-    y_prob, y_pred = model.predict(X_test)
+"""
+   Works with sklearn models and custom models.
+   Returns: y_score, y_pred
+"""
+def get_predictions(model, X, threshold=0.5):
+    raw_pred = model.predict(X)
+
+    # custom model returns (prob, pred)
+    if isinstance(raw_pred, tuple) and len(raw_pred) == 2:
+        y_score, y_pred = raw_pred
+        return np.asarray(y_score), np.asarray(y_pred)
+
+    # sklearn models with probability
+    if hasattr(model, "predict_proba"):
+        y_score = model.predict_proba(X)[:, 1]
+        y_pred = (y_score >= threshold).astype(int)
+        return y_score, y_pred
+
+    # LinearSVC / SVM without probability
+    if hasattr(model, "decision_function"):
+        y_score = model.decision_function(X)
+        y_pred = (y_score >= 0).astype(int)
+        return y_score, y_pred
+
+    # fallback
+    y_pred = np.asarray(raw_pred)
+    y_score = y_pred
+    return y_score, y_pred
+
+def evaluate(model, X_test, y_test, tracker, threshold=0.5, phase="test", best_params=None):
+    y_prob, y_pred = get_predictions(model, X_test, threshold=threshold)
 
     acc = accuracy(y_test, y_pred)
     p = precision(y_test, y_pred, positive_label=1)
@@ -17,8 +49,8 @@ def evaluate(model, X_test, y_test, tracker):
     print("\nConfusion Matrix Counts:")
     print(f"TP: {tp}, FP: {fp}, FN: {fn}, TN: {tn}")
 
-    tracker.write_row({
-        "phase": "test",
+    result = {
+        "phase": phase,
         "accuracy": acc,
         "suspicious_precision": p,
         "suspicious_recall": r,
@@ -26,15 +58,24 @@ def evaluate(model, X_test, y_test, tracker):
         "tp": tp,
         "fp": fp,
         "fn": fn,
-        "tn": tn
-    })
+        "tn": tn,
+        "threshold": threshold,
+        "best_params": best_params,
+    }
 
-    return
+    if tracker is not None:
+        tracker.write_row(result)
 
-def evaluation_final(best_model, vectorizor, X_test, y_test, tracker, threshold=0.5):
-    # load best model
-    model, vectorizor = load_model_artifacts(best_model, vectorizor)
+    return result
 
-    evaluate(model, X_test, y_test, tracker)
+def evaluate_saved_model(model_path, X_test, y_test, tracker=None, threshold=0.5):
+    model = joblib.load(model_path)
 
-    # TODO: use threshold
+    return evaluate(
+        model=model,
+        X_test=X_test,
+        y_test=y_test,
+        tracker=tracker,
+        threshold=threshold,
+        phase="saved_model_test",
+    )
