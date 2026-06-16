@@ -5,7 +5,7 @@ import joblib
 import pandas as pd
 from sklearn.model_selection import RandomizedSearchCV
 
-from models.model_registry import get_model
+from model.model_registry import get_model
 from evaluation.metrics_clf import *
 
 """
@@ -15,18 +15,18 @@ Random search means that the experiment randomly samples a limited number of
 hyperparameter combinations from a larger search space. Unlike grid search, it
 does not test every possible combination.
 
-This tuner:
-1. runs RandomizedSearchCV
-2. logs every searched parameter result to tracker
-3. saves the best model
-4. logs the best model result to tracker
-
 Example:
-    {
-        "n_estimators": [100, 200, 300, 500],
-        "max_depth": [None, 10, 20, 30],
-        "min_samples_split": [2, 5, 10]
+    params = {
+        "n_estimators": [100, 200],
+        "max_depth": [None, 20],
+        "min_samples_split": [2, 5]
     }
+    search_params = {
+        "n_iter": 5
+    }
+
+This search space has 2 x 2 x 2 = 8 possible combinations, but random
+search tests only 5 randomly selected combinations.
 """
 class RandomCVTuner:
     def __init__(self, model_name, fixed_params, params, tracker, scoring, cv=5, n_iter=10, random_state=42):
@@ -106,7 +106,7 @@ class RandomCVTuner:
 
         return model_path
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, save_best=True):
         base_model = get_model(self.model_name, fixed_params=self.fixed_params)
 
         search = RandomizedSearchCV(
@@ -134,7 +134,11 @@ class RandomCVTuner:
 
         best_train_score = cv_results["mean_train_score"][best_idx]
         best_val_score = search.best_score_
-        best_model_path = self._save_model(best_model, note="best_model")
+
+        if save_best:
+            best_model_path = self._save_model(best_model, note="best_model")
+        else:
+            best_model_path = None
 
         # calculate best model train accuracy on full training data
         # and save best model summary row

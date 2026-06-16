@@ -6,18 +6,6 @@ import pandas as pd
 import questionary
 
 def load_model_artifacts(model_path, vectorizer):
-    """
-    Load a trained sklearn model.
-
-    supported options:
-    1. models/best_pipeline.pkl
-       - a single sklearn Pipeline that already includes TF-IDF + classifier
-    2. models/tfidf_vectorizer.pkl + models/best_model.pkl
-       - separate vectorizer and classifier
-
-    If no model file exists, the app still runs with a simple heuristic fallback
-    so the UI can be tested before the final model is connected.
-    """
     vectorizer = joblib.load(vectorizer)
     model = joblib.load(model_path)
 
@@ -34,7 +22,6 @@ def load_data(vectorizer_path, x_train_path, x_test_path, y_train_path, y_test_p
 
     return vectorizer, X_train_tfidf, X_test_tfidf, y_train, y_test
 
-@staticmethod
 def load_all_model_configs(config_path):
     import json
 

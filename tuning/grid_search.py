@@ -5,9 +5,8 @@ import pandas as pd
 
 from sklearn.model_selection import GridSearchCV, cross_val_predict
 
-from models.model_registry import get_model
+from model.model_registry import get_model
 from evaluation.metrics_clf import *
-
 
 """
 GridCVTuner is for grid search hyperparameter tuning.
@@ -17,11 +16,12 @@ given hyperparameter values. Each hyperparameter is given as a list of candidate
 values, and the tuner expands them into all possible combinations.
 
 Example:
-    {
-        "C": [0.1, 1.0, 10.0],
-        "kernel": ["linear", "rbf"],
-        "gamma": ["scale", "auto"]
+    params = {
+        "C": [0.1, 1.0],
+        "class_weight": [None, "balanced"]
     }
+
+This search space has 2 x 2 = 4 combinations, and grid search tests all of them.
 """
 class GridCVTuner:
     def __init__(self, model_name, fixed_params, params, tracker, scoring, cv=5):
@@ -97,14 +97,8 @@ class GridCVTuner:
 
         return model_path
 
+    # save out-of-fold validation scores using the best hyperparameters for threshold tuning
     def _save_oof_validation_scores(self, best_params, X_train, y_train):
-        """
-        Save out-of-fold validation scores for the best hyperparameters.
-
-        Each score is produced when that sample was in the validation fold,
-        not when the model was trained on that same sample.
-        """
-
         final_params = self.fixed_params.copy()
         final_params.update(best_params)
 
@@ -159,7 +153,7 @@ class GridCVTuner:
 
         return score_path
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, save_best=True):
         base_model = get_model(self.model_name, fixed_params=self.fixed_params)
 
         search = GridSearchCV(
@@ -185,7 +179,11 @@ class GridCVTuner:
 
         best_train_score = cv_results["mean_train_score"][best_idx]
         best_val_score = search.best_score_
-        best_model_path = self._save_model(best_model, note="best_model")
+
+        if save_best:
+            best_model_path = self._save_model(best_model, note="best_model")
+        else:
+            best_model_path = None
 
         oof_score_path = self._save_oof_validation_scores(
             best_params=best_params,
@@ -210,5 +208,3 @@ class GridCVTuner:
             "cv_results": cv_results,
             "best_model_path": best_model_path
         }
-
-

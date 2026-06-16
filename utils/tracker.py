@@ -10,13 +10,13 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, classification_report
 
 """
-Experiment tracker for training/validation/test metrics.
+    Experiment tracker for training/validation/test metrics.
 
-Main features:
-- log metrics during training
-- save metrics to CSV
-- load metrics from CSV
-- visualize metrics with seaborn
+    Main features:
+        - log metrics during training
+        - save metrics to CSV
+        - load metrics from CSV
+        - visualize metrics with seaborn
 """
 class Tracker:
     def __init__(self, save_dir, experiment_name="temp_experiment", filename="temp_metrics.csv", columns=None):
@@ -32,37 +32,18 @@ class Tracker:
     # -----------------------------
     # Logging
     # -----------------------------
-    """
-    Temporarily store one metric value.
-    Example:
-        tracker.log("train_loss", 0.52)
-        tracker.log("val_acc", 87.2)
-    """
+
+    # temporarily store one metric value
     def log(self, key, value):
-        """
-        Temporarily store one metric value.
-        Example:
-            tracker.log("train_loss", 0.52)
-            tracker.log("val_acc", 87.2)
-        """
         self.buffer[key].append(float(value))
 
-    """
-    Store multiple metric values at once.
-    Example:
-        tracker.log_dict({
-        train_loss": 0.52,
-        "train_acc": 88.1
-        })
-    """
+    # store multiple metric values at once
     def log_dict(self, metric_dict):
         for key, value in metric_dict.items():
             self.log(key, value)
 
-    """
-    Average all buffered values.
-    Useful when logging batch-level losses and writing epoch-level average.
-    """
+    # average all buffered values.
+    # useful when logging batch-level losses and writing epoch-level average.
     def summarize(self):
         summary = {}
 
@@ -72,12 +53,7 @@ class Tracker:
 
         return summary
 
-    """
-    Write summarized metrics to CSV.
-
-    Example output row:
-        epoch, phase, train_loss, train_acc, val_loss, val_acc
-    """
+    # write summarized metrics to CSV
     def write_experiment(self, epoch, phase=None, extra=None, clear_buffer=True):
         row = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -100,10 +76,8 @@ class Tracker:
 
         return row
 
-    """
-    Directly write a metric row without using buffer.
-    Useful when you already calculated metrics.
-    """
+    # directly write a metric row without using buffer.
+    # useful when you already calculated metrics.
     def write_row(self, row):
         base_row = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -166,10 +140,11 @@ class Tracker:
     # Visualization
     # -----------------------------
     """
-    Plot one metric.
-    Example:
-        tracker.plot_metric("train_loss")
-        tracker.plot_metric("val_acc")
+        Plot one metric.
+    
+        Example:
+            tracker.plot_metric("train_loss")
+            tracker.plot_metric("val_acc")
     """
     def plot_metric(self, metric, x="epoch", title=None, hue=None, save=True, show=True):
         df = self.load()
@@ -199,10 +174,8 @@ class Tracker:
 
         plt.close()
 
-    """
-    Plot multiple metrics separately.
-    If metrics is None, automatically plot numeric columns except epoch.
-    """
+    # plot multiple metrics separately
+    # if metrics is None, automatically plot numeric columns except epoch
     def plot_metrics(self, metrics=None, x="epoch", title=None, hue=None, save=True, show=True):
         df = self.load()
 
@@ -216,10 +189,8 @@ class Tracker:
         for metric in metrics:
             self.plot_metric(metric=metric, x=x, hue=hue, save=save, show=show)
 
-    """
-    Convenient plot function for common train/val loss and accuracy.
-    It automatically uses existing columns only.
-    """
+    # convenient plot function for common train/val loss and accuracy
+    # it automatically uses existing columns only
     def plot_loss_acc(self, save=True, show=True):
         df = self.load()
 
@@ -258,18 +229,18 @@ class Tracker:
             plt.close()
 
     """
-    Plot confusion matrix using seaborn.
+        Plot confusion matrix using seaborn.
 
-    Args:
-        y_true: true labels, list or numpy array
-        y_pred: predicted labels, list or numpy array
-        class_names: class names, e.g. ["NORMAL", "PNEUMONIA"]
-        normalize: if True, show ratio instead of raw counts
+        Args:
+            y_true: true labels, list or numpy array
+            y_pred: predicted labels, list or numpy array
+            class_names: class names, e.g. ["NORMAL", "PNEUMONIA"]
+            normalize: if True, show ratio instead of raw counts
     """
     def plot_confusion_matrix(self, y_true, y_pred, class_names=None, normalize=False, save=True, show=True):
         cm = confusion_matrix(y_true, y_pred)
 
-        if normalize: # when wanna see ratio instead of count
+        if normalize: # when want to see ratio instead of count
             cm = cm.astype("float") / cm.sum(axis=1, keepdims=True)
 
         if class_names is None:
@@ -296,18 +267,12 @@ class Tracker:
 
         return cm
 
-
-    """
-    Print last n rows of metric CSV.
-    """
+    # print last n rows of metric CSV
     def print_last(self, n= 5):
         df = self.load()
         print(df.tail(n))
 
-    """
-    Add an empty row to CSV for human readability.
-    Useful when separating random warm-up and real training sections.
-    """
+    # add an empty row to CSV for human readability
     def add_blank_row(self):
 
         if not os.path.exists(self.file_path):
@@ -319,10 +284,3 @@ class Tracker:
         df = pd.concat([df, pd.DataFrame([blank_row])], ignore_index=True)
 
         df.to_csv(self.file_path, index=False)
-
-
-# ============================================================
-# Appendix
-# ============================================================
-# defaultdict(list)는 self.buffer = {} 랑 비슷한데, 없는 key에 접근하면 자동으로 빈 list를 만들어주는 dictionary야.
-# metric 이름마다 여러 값을 list로 모으려고 쓴 구조

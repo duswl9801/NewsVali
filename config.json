@@ -31,23 +31,5 @@
       			"note"
 			]
 		}
-	},
-	"input":{
-		"type": "",
-		"txt_len": "",
-		"img_h": "",
-		"img_w": ""
-	},
-	"app": {
-		"model_dir": "./outputs/models"
-
-	},
-	"model": {
-		"epochs": 200,
-		"learning_rate": 0.001,
-		"threshold": 0.5,
-		"batch_size": 8,
-		"type": [
-		]
 	}
 }

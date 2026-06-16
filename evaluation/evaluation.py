@@ -4,10 +4,6 @@ import joblib
 from evaluation.metrics_clf import *
 from utils.util import *
 
-"""
-   Works with sklearn models and custom models.
-   Returns: y_score, y_pred
-"""
 def get_predictions(model, X, threshold=0.5):
     raw_pred = model.predict(X)
 
@@ -16,7 +12,7 @@ def get_predictions(model, X, threshold=0.5):
         y_score, y_pred = raw_pred
         return np.asarray(y_score), np.asarray(y_pred)
 
-    # sklearn models with probability
+    # sklearn model with probability
     if hasattr(model, "predict_proba"):
         y_score = model.predict_proba(X)[:, 1]
         y_pred = (y_score >= threshold).astype(int)
