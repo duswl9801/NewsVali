@@ -1,0 +1,220 @@
+{
+  "AP Bears Stadium Timeline": {
+    "source": "AP News",
+    "url": "https://apnews.com/article/bears-nfl-stadium-e470399d7696e96c3d57c88ed36e7d26",
+    "title": "Chicago Bears sticking to stadium timeline amid uncertainty with Illinois incentives",
+    "updated": "2026-06-01 1:37 PM CDT",
+    "sentences": [
+      "CHICAGO (AP) — The Chicago Bears are sticking with their current timeline for selecting a site for a new stadium amid uncertainty over Illinois incentives.",
+      "The Illinois Senate passed a bill that would have allowed Arlington Heights and Chicago to create local stadium authorities.",
+      "The House approved the measure on the last day of the spring legislative session, giving the Bears immediate authority to avoid all property taxes on a new stadium.",
+      "The Bears said they are finalizing their evaluation of possible stadium sites in Arlington Heights and Springfield, Illinois.",
+      "The team said it remains on a late spring or early summer timeline for sharing an update.",
+      "The Bears’ lease for Soldier Field expires in 2026, and the team cannot break the lease early under any circumstances.",
+      "The team completed a $1.97 billion deal for 326 acres of land in Arlington Heights in 2023."
+    ],
+    "annotations": [
+      {
+        "sentence_id": 3,
+        "label": "false",
+        "error_type": "event_outcome_reversal",
+        "original_fact": "The House adjourned without taking up the measure.",
+        "modified_claim": "The House approved the measure and gave immediate tax authority."
+      },
+      {
+        "sentence_id": 4,
+        "label": "false",
+        "error_type": "location_substitution",
+        "original_fact": "The Bears said they were evaluating possible stadium sites in Arlington Heights and Hammond, Indiana.",
+        "modified_claim": "The Bears were evaluating possible stadium sites in Arlington Heights and Springfield, Illinois."
+      },
+      {
+        "sentence_id": 6,
+        "label": "false",
+        "error_type": "date_and_condition_error",
+        "original_fact": "The Bears’ lease for Soldier Field runs through 2033, but the team can pay a fee to break the lease early.",
+        "modified_claim": "The lease expires in 2026, and the team cannot break the lease early under any circumstances."
+      },
+      {
+        "sentence_id": 7,
+        "label": "false",
+        "error_type": "number_exaggeration",
+        "original_fact": "The team completed a $197 million deal for 326 acres of land in Arlington Heights in 2023.",
+        "modified_claim": "The team completed a $1.97 billion deal for 326 acres of land in Arlington Heights in 2023."
+      }
+    ]
+  },
+  "AP OpenAI IPO Filing": {
+    "source": "AP News",
+    "url": "https://apnews.com/article/openai-ipo-chatgpt-c7583994426b1b097120786d6a0b8308",
+    "title": "OpenAI files confidential SEC paperwork for IPO, opening the door to a Wall Street debut",
+    "updated": "2026-06-08 6:32 PM CDT",
+    "sentences": [
+      "ChatGPT maker OpenAI filed preliminary paperwork that could open the door to becoming a publicly traded company.",
+      "The San Francisco-based company said it filed public paperwork with the U.S. Department of Justice.",
+      "OpenAI said it had already decided to list shares within 30 days and publicly disclosed full profit figures for the year.",
+      "The move follows Anthropic’s disclosure that it had canceled its own plans for an initial public offering of shares.",
+      "OpenAI began in 2015 as a nonprofit dedicated to developing AI for the common good.",
+      "The company has publicly disclosed exactly how much money it is making and when it plans to turn a profit.",
+      "Analysts said OpenAI faces competition from Anthropic and Google’s AI assistant Gemini."
+    ],
+    "annotations": [
+      {
+        "sentence_id": 2,
+        "label": "false",
+        "error_type": "agency_and_confidentiality_error",
+        "original_fact": "OpenAI said it filed confidential paperwork with the U.S. Securities and Exchange Commission.",
+        "modified_claim": "OpenAI filed public paperwork with the U.S. Department of Justice."
+      },
+      {
+        "sentence_id": 3,
+        "label": "false",
+        "error_type": "timing_and_financial_disclosure_error",
+        "original_fact": "OpenAI said it had not decided on timing, and the article says it has not publicly disclosed how much money it is making.",
+        "modified_claim": "OpenAI decided to list within 30 days and disclosed full profit figures."
+      },
+      {
+        "sentence_id": 4,
+        "label": "false",
+        "error_type": "related_event_reversal",
+        "original_fact": "The move follows Anthropic’s disclosure that it is also moving toward an initial public offering of shares.",
+        "modified_claim": "Anthropic canceled its own IPO plans."
+      },
+      {
+        "sentence_id": 6,
+        "label": "false",
+        "error_type": "disclosure_reversal",
+        "original_fact": "The company has not yet publicly disclosed how much money it is making or when it plans to turn a profit.",
+        "modified_claim": "The company has publicly disclosed exactly how much money it is making and when it plans to turn a profit."
+      }
+    ]
+  },
+  "BBC Marilyn Monroe Auction": {
+    "source": "BBC",
+    "url": "https://www.bbc.com/news/articles/cvgzgd2xe2zo",
+    "title": "Marilyn Monroe auction features star's make-up and gowns on 100th birthday",
+    "updated": "2026-06-04",
+    "sentences": [
+      "An auction of Marilyn Monroe memorabilia has already brought in thousands of dollars in bids on the 100th anniversary of her birth.",
+      "The sale features 18,500 items from Monroe’s life, including an evening purse, an evening gown, and her lip pomade.",
+      "Julien’s Auctions said the sale includes rare photographs and images hidden for decades.",
+      "The most expensive item is a 1950s purse with a highest bid of $700 million as of Thursday morning.",
+      "Monroe was born Norma Jeane Mortenson and grew up in foster homes.",
+      "She starred in films including Some Like It Hot and Titanic before her death in 1962.",
+      "More than a thousand fans dressed as Monroe in New York City to pose near a statue of her famous white dress."
+    ],
+    "annotations": [
+      {
+        "sentence_id": 2,
+        "label": "false",
+        "error_type": "number_exaggeration",
+        "original_fact": "The sale features 185 items from Monroe’s life.",
+        "modified_claim": "The sale features 18,500 items from Monroe’s life."
+      },
+      {
+        "sentence_id": 4,
+        "label": "false",
+        "error_type": "number_exaggeration",
+        "original_fact": "The highest bid on the purse was $70,000 as of Thursday morning.",
+        "modified_claim": "The highest bid was $700 million."
+      },
+      {
+        "sentence_id": 6,
+        "label": "false",
+        "error_type": "film_title_fabrication",
+        "original_fact": "She starred in films including Some Like It Hot and Niagara.",
+        "modified_claim": "She starred in films including Some Like It Hot and Titanic."
+      },
+      {
+        "sentence_id": 7,
+        "label": "false",
+        "error_type": "location_substitution",
+        "original_fact": "More than a thousand fans dressed as Monroe in Palm Springs, California.",
+        "modified_claim": "More than a thousand fans dressed as Monroe in New York City."
+      }
+    ]
+  },
+  "NPR Remote Work Study": {
+    "source": "NPR",
+    "url": "https://www.npr.org/2026/06/08/nx-s1-5848125/remote-work-mental-health-isolation",
+    "title": "People love working from home. But does it love them back? A new study says no",
+    "updated": "2026-06-08 5:00 AM ET",
+    "sentences": [
+      "A new study suggests remote work has made some workers more socially isolated, anxious, and depressed compared with people who work in person.",
+      "Natalia Emanuel, an economist at the University of Chicago, was the main author of the study.",
+      "The study found that workers in remotable jobs had a 58% decrease in hours spent alone compared with people in non-remotable jobs.",
+      "Remote workers also saw a 72% decrease in the chance of spending a whole day with no human contact.",
+      "The researchers looked at data from two small local surveys on American workers.",
+      "The article says remote workers were not making up for lost social connection by socializing after work.",
+      "Nicholas Epley said people may recognize the pain of commuting more easily than they anticipate the effect of missed social connections."
+    ],
+    "annotations": [
+      {
+        "sentence_id": 2,
+        "label": "false",
+        "error_type": "affiliation_error",
+        "original_fact": "Natalia Emanuel is an economist at the Federal Reserve Bank of New York.",
+        "modified_claim": "Natalia Emanuel is an economist at the University of Chicago."
+      },
+      {
+        "sentence_id": 3,
+        "label": "false",
+        "error_type": "statistic_direction_reversal",
+        "original_fact": "Workers in remotable jobs had a 58% rise in hours spent alone.",
+        "modified_claim": "Workers in remotable jobs had a 58% decrease in hours spent alone."
+      },
+      {
+        "sentence_id": 4,
+        "label": "false",
+        "error_type": "statistic_direction_reversal",
+        "original_fact": "Remote workers saw a 72% rise in the chance of spending their whole day with no human contact.",
+        "modified_claim": "Remote workers saw a 72% decrease."
+      },
+      {
+        "sentence_id": 5,
+        "label": "false",
+        "error_type": "method_error",
+        "original_fact": "The researchers looked at data from five large national surveys on American workers.",
+        "modified_claim": "The researchers looked at data from two small local surveys."
+      }
+    ]
+  },
+  "NPR Backrooms and Obsession Review": {
+    "source": "NPR",
+    "url": "https://www.npr.org/2026/06/05/nx-s1-5845364/backrooms-obsession-review",
+    "title": "2 young directors strike big at the box office with 'Backrooms' and 'Obsession'",
+    "updated": "2026-06-05 12:10 PM ET",
+    "sentences": [
+      "The review says a 2019 image posted on Reddit helped inspire the Backrooms horror concept.",
+      "Kane Parsons directed a Backrooms web series as a teenager and later made a feature film.",
+      "The article says the new Backrooms feature is the No. 1 movie at the box office.",
+      "Backrooms is set in 2090 on Mars and follows a young astronaut who discovers a haunted spaceship.",
+      "The review says Obsession has grossed more than $12 million domestically since its May 15 release.",
+      "The reviewer describes Obsession as a story that combines The Monkey’s Paw with Fatal Attraction.",
+      "The review argues that Obsession uses horror to address consent, male loneliness, and autonomy."
+    ],
+    "annotations": [
+      {
+        "sentence_id": 1,
+        "label": "false",
+        "error_type": "platform_substitution",
+        "original_fact": "A photo posted on the message board 4chan helped inspire the Backrooms horror concept.",
+        "modified_claim": "A 2019 image posted on Reddit helped inspire the Backrooms horror concept."
+      },
+      {
+        "sentence_id": 4,
+        "label": "false",
+        "error_type": "setting_and_plot_fabrication",
+        "original_fact": "Backrooms is set in 1990 in the suburbs of Santa Clara Valley, California, and follows a furniture-store owner named Clark.",
+        "modified_claim": "Backrooms is set in 2090 on Mars and follows an astronaut."
+      },
+      {
+        "sentence_id": 5,
+        "label": "false",
+        "error_type": "number_reduction",
+        "original_fact": "Obsession has grossed more than $120 million domestically since its May 15 release.",
+        "modified_claim": "Obsession has grossed more than $12 million domestically since its May 15 release."
+      }
+    ]
+  }
+}
