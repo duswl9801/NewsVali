@@ -107,7 +107,7 @@ The NewsVali desktop application can be run directly with the saved TF-IDF vecto
 
 To use the command-line experiment manager, make sure the additional experiment packages are installed:
 ```bash
-pip install matplotlib
+pip install matplotlib seaborn dotenv
 ```
 
 Then run:
