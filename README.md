@@ -67,13 +67,13 @@ source .venv/bin/activate
 To run the desktop application, install the main required packages:
 
 ```bash
-pip install customtkinter scikit-learn joblib numpy scipy
+pip install customtkinter scikit-learn joblib numpy scipy pandas
 ```
 
 If you also want to reproduce the experiment workflow or use the command-line experiment manager, install the additional packages:
 
 ```bash
-pip install pandas questionary rich pyfiglet
+pip install questionary rich pyfiglet
 ```
 
 You can also install all required packages at once:
